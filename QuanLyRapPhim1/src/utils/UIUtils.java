@@ -108,7 +108,7 @@ public class UIUtils {
     }
     
     /**
-     * Create Gradient Button with Shadow - Fixed text rendering
+     * Create Gradient Button with Shadow
      */
     private static JButton createGradientButton(String text, Color color1, Color color2, Color fgColor) {
         JButton button = new JButton(text) {
@@ -116,7 +116,6 @@ public class UIUtils {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2d = (Graphics2D) g.create();
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 
                 int width = getWidth();
                 int height = getHeight();
@@ -143,37 +142,18 @@ public class UIUtils {
                 g2d.fillRoundRect(0, 0, width, height, 10, 10);
                 
                 g2d.dispose();
-                
-                // ĐÂY LÀ KEY: Vẽ text manually với đủ không gian
-                g2d = (Graphics2D) g.create();
-                g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                g2d.setFont(getFont());
-                g2d.setColor(getForeground());
-                
-                FontMetrics fm = g2d.getFontMetrics();
-                String buttonText = getText();
-                int textWidth = fm.stringWidth(buttonText);
-                int textX = (width - textWidth) / 2;
-                int textY = (height + fm.getAscent() - fm.getDescent()) / 2;
-                
-                g2d.drawString(buttonText, textX, textY);
-                g2d.dispose();
+                super.paintComponent(g);
             }
         };
         
         button.setForeground(fgColor);
-        button.setFont(new Font("Segoe UI", Font.BOLD, 13));  // Font 13
+        button.setFont(FONT_BUTTON);
         button.setFocusPainted(false);
         button.setBorderPainted(false);
         button.setContentAreaFilled(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));  // Padding nhỏ
+        button.setBorder(BorderFactory.createEmptyBorder(12, 24, 12, 24));
         button.setOpaque(false);
-        
-        // QUAN TRỌNG: Set preferred size dựa trên text length
-        FontMetrics fm = button.getFontMetrics(button.getFont());
-        int textWidth = fm.stringWidth(text);
-        button.setPreferredSize(new Dimension(textWidth + 30, 45));  // +30 cho padding
         
         return button;
     }
