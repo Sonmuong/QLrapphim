@@ -7,6 +7,7 @@ import dao.PhimDAO;
 import model.Ve;
 import model.SuatChieu;
 import model.Phim;
+import utils.UIUtils;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -18,13 +19,13 @@ public class QuanLyVeThongKeForm extends JFrame {
     private VeDAO veDAO;
     private SuatChieuDAO suatChieuDAO;
     private ThongKeDAO thongKeDAO;
-    private PhimDAO phimDAO;  // ← THÊM
+    private PhimDAO phimDAO;
     private DefaultTableModel tableModelVe, tableModelThongKe;
     
     private JTable tableVe, tableThongKe;
     private JTextField txtSoLuong;
-    private JLabel lblGiaVe, lblThanhTien, lblThongTinPhim;  // ← THÊM lblThongTinPhim
-    private JComboBox<String> cboPhim, cboSuatChieu, cboLoaiThongKe;  // ← THÊM cboPhim
+    private JLabel lblGiaVe, lblThanhTien, lblThongTinPhim;
+    private JComboBox<String> cboPhim, cboSuatChieu, cboLoaiThongKe;
     private JTextField txtNamThongKe, txtTuNgay, txtDenNgay;
     private JButton btnBanVe, btnLamMoi, btnCapNhatTK, btnLocThongKe;
     private JLabel lblTongVe, lblTongDoanhThu;
@@ -33,10 +34,10 @@ public class QuanLyVeThongKeForm extends JFrame {
         veDAO = new VeDAO();
         suatChieuDAO = new SuatChieuDAO();
         thongKeDAO = new ThongKeDAO();
-        phimDAO = new PhimDAO();  // ← THÊM
+        phimDAO = new PhimDAO();
         
         initComponents();
-        loadComboBoxPhim();  // ← Load phim trước
+        loadComboBoxPhim();
         loadDataVe();
         loadThongKe();
         setLocationRelativeTo(null);
@@ -44,83 +45,174 @@ public class QuanLyVeThongKeForm extends JFrame {
     
     private void initComponents() {
         setTitle("Quản Lý Vé & Thống Kê");
-        setSize(1500, 750);
+        setSize(1600, 850);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLayout(new BorderLayout());
         
+        // Background
+        JPanel mainPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                GradientPaint gradient = new GradientPaint(
+                    0, 0, UIUtils.GRAY_50,
+                    0, getHeight(), UIUtils.GRAY_100
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        mainPanel.setOpaque(false);
+        setContentPane(mainPanel);
+        
+        // Header
+        JPanel pnlHeader = UIUtils.createHeaderPanel(
+            new Color(251, 146, 60),
+            new Color(234, 88, 12)
+        );
+        pnlHeader.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
+        pnlHeader.setLayout(new BorderLayout());
+        
+        JPanel pnlTitleArea = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        pnlTitleArea.setOpaque(false);
+        
+        JLabel lblIcon = new JLabel("🎫");
+        lblIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 36));
+        pnlTitleArea.add(lblIcon);
+        
+        JLabel lblTitle = new JLabel("BÁN VÉ & THỐNG KÊ");
+        lblTitle.setFont(UIUtils.FONT_TITLE);
+        lblTitle.setForeground(Color.WHITE);
+        pnlTitleArea.add(lblTitle);
+        
+        pnlHeader.add(pnlTitleArea, BorderLayout.WEST);
+        
+        JButton btnBack = UIUtils.createIconButton("🏠", UIUtils.WARNING_DARK, UIUtils.WARNING_COLOR);
+        btnBack.setToolTipText("Quay lại trang chủ");
+        btnBack.addActionListener(e -> dispose());
+        pnlHeader.add(btnBack, BorderLayout.EAST);
+        
+        mainPanel.add(pnlHeader, BorderLayout.NORTH);
+        
+        // Tabbed Pane
         JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(UIUtils.FONT_SUBHEADING);
+        tabbedPane.setBackground(Color.WHITE);
         
-        // ========== TAB QUẢN LÝ VÉ ==========
-        JPanel pnlQuanLyVe = new JPanel(new BorderLayout(10, 10));
-        pnlQuanLyVe.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        tabbedPane.addTab("  🎫 Bán Vé  ", createBanVePanel());
+        tabbedPane.addTab("  📊 Thống Kê  ", createThongKePanel());
         
-        // Panel form bán vé (Trái)
+        mainPanel.add(tabbedPane, BorderLayout.CENTER);
+    }
+    
+    // ========== TAB BÁN VÉ ==========
+    private JPanel createBanVePanel() {
+        JPanel panel = new JPanel(new BorderLayout(20, 20));
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        // LEFT: Form bán vé
+        JPanel pnlFormWrapper = createFormBanVe();
+        pnlFormWrapper.setPreferredSize(new Dimension(480, 0));
+        
+        // RIGHT: Danh sách vé
+        JPanel pnlTableVe = createTableVe();
+        
+        panel.add(pnlFormWrapper, BorderLayout.WEST);
+        panel.add(pnlTableVe, BorderLayout.CENTER);
+        
+        return panel;
+    }
+    
+    private JPanel createFormBanVe() {
+        JPanel wrapper = UIUtils.createCardPanel();
+        wrapper.setLayout(new BorderLayout(0, 15));
+        
+        // Title
+        JLabel lblTitle = new JLabel("🎬 Bán Vé Xem Phim");
+        lblTitle.setFont(UIUtils.FONT_HEADING);
+        lblTitle.setForeground(UIUtils.TEXT_PRIMARY);
+        wrapper.add(lblTitle, BorderLayout.NORTH);
+        
+        // Form
         JPanel pnlForm = new JPanel(new GridBagLayout());
-        pnlForm.setBorder(BorderFactory.createTitledBorder("🎬 Bán Vé"));
+        pnlForm.setBackground(Color.WHITE);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(10, 0, 10, 0);
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        gbc.gridx = 0;
         
-        // ← BƯỚC 1: CHỌN PHIM
-        gbc.gridx = 0; gbc.gridy = 0;
-        JLabel lblPhim = new JLabel("1️⃣ Chọn Phim: *");
-        lblPhim.setFont(new Font("Arial", Font.BOLD, 13));
-        pnlForm.add(lblPhim, gbc);
-        gbc.gridx = 1;
+        // BƯỚC 1: Chọn phim
+        gbc.gridy = 0;
+        JLabel lblStep1 = new JLabel("1️⃣ Chọn Phim *");
+        lblStep1.setFont(UIUtils.FONT_SUBHEADING);
+        lblStep1.setForeground(new Color(99, 102, 241));
+        pnlForm.add(lblStep1, gbc);
+        
+        gbc.gridy = 1;
         cboPhim = new JComboBox<>();
-        cboPhim.setPreferredSize(new Dimension(300, 30));
-        // ← Khi chọn phim, load suất chiếu của phim đó
+        UIUtils.styleComboBox(cboPhim);
+        cboPhim.setPreferredSize(new Dimension(0, 40));
         cboPhim.addActionListener(e -> loadSuatChieuTheoPhim());
         pnlForm.add(cboPhim, gbc);
         
-        // Thông tin phim (thời lượng, thể loại)
-        gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2;
+        // Thông tin phim
+        gbc.gridy = 2;
         lblThongTinPhim = new JLabel("<html><i>Chọn phim để xem thông tin</i></html>");
-        lblThongTinPhim.setFont(new Font("Arial", Font.PLAIN, 11));
-        lblThongTinPhim.setForeground(Color.GRAY);
+        lblThongTinPhim.setFont(UIUtils.FONT_SMALL);
+        lblThongTinPhim.setForeground(UIUtils.TEXT_MUTED);
         pnlForm.add(lblThongTinPhim, gbc);
         
-        // ← BƯỚC 2: CHỌN SUẤT CHIẾU
-        gbc.gridwidth = 1;
-        gbc.gridx = 0; gbc.gridy = 2;
-        JLabel lblSuat = new JLabel("2️⃣ Chọn Suất Chiếu: *");
-        lblSuat.setFont(new Font("Arial", Font.BOLD, 13));
-        pnlForm.add(lblSuat, gbc);
-        gbc.gridx = 1;
+        // BƯỚC 2: Chọn suất chiếu
+        gbc.gridy = 3;
+        gbc.insets = new Insets(20, 0, 10, 0);
+        JLabel lblStep2 = new JLabel("2️⃣ Chọn Suất Chiếu *");
+        lblStep2.setFont(UIUtils.FONT_SUBHEADING);
+        lblStep2.setForeground(new Color(34, 197, 94));
+        pnlForm.add(lblStep2, gbc);
+        
+        gbc.gridy = 4;
+        gbc.insets = new Insets(10, 0, 10, 0);
         cboSuatChieu = new JComboBox<>();
-        cboSuatChieu.setPreferredSize(new Dimension(300, 30));
-        // Khi chọn suất chiếu, tự động hiển thị giá vé
+        UIUtils.styleComboBox(cboSuatChieu);
+        cboSuatChieu.setPreferredSize(new Dimension(0, 40));
         cboSuatChieu.addActionListener(e -> hienThiGiaVe());
         pnlForm.add(cboSuatChieu, gbc);
         
-        // ← GIÁ VÉ (tự động hiển thị)
-        gbc.gridx = 0; gbc.gridy = 3;
-        pnlForm.add(new JLabel("💰 Giá Vé:"), gbc);
-        gbc.gridx = 1;
+        // Giá vé
+        gbc.gridy = 5;
+        JPanel pnlGiaVe = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        pnlGiaVe.setOpaque(false);
+        JLabel lblGiaVeText = new JLabel("💰 Giá vé:");
+        lblGiaVeText.setFont(UIUtils.FONT_BODY);
+        lblGiaVeText.setForeground(UIUtils.TEXT_SECONDARY);
+        pnlGiaVe.add(lblGiaVeText);
+        
         lblGiaVe = new JLabel("0 VNĐ");
-        lblGiaVe.setFont(new Font("Arial", Font.BOLD, 18));
-        lblGiaVe.setForeground(new Color(39, 174, 96));
-        pnlForm.add(lblGiaVe, gbc);
+        lblGiaVe.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblGiaVe.setForeground(new Color(34, 197, 94));
+        pnlGiaVe.add(lblGiaVe);
+        pnlForm.add(pnlGiaVe, gbc);
         
-        // ← BƯỚC 3: NHẬP SỐ LƯỢNG
-        gbc.gridx = 0; gbc.gridy = 4;
-        JLabel lblSoLuong = new JLabel("3️⃣ Số Lượng Vé: *");
-        lblSoLuong.setFont(new Font("Arial", Font.BOLD, 13));
-        pnlForm.add(lblSoLuong, gbc);
-        gbc.gridx = 1;
-        JPanel pnlSoLuong = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        txtSoLuong = new JTextField(10);
-        txtSoLuong.setText("1");
-        txtSoLuong.setFont(new Font("Arial", Font.PLAIN, 14));
-        // Tự động tính thành tiền khi thay đổi số lượng
-        txtSoLuong.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                tinhThanhTien();
-            }
-        });
+        // BƯỚC 3: Số lượng
+        gbc.gridy = 6;
+        gbc.insets = new Insets(20, 0, 10, 0);
+        JLabel lblStep3 = new JLabel("3️⃣ Số Lượng Vé *");
+        lblStep3.setFont(UIUtils.FONT_SUBHEADING);
+        lblStep3.setForeground(new Color(251, 146, 60));
+        pnlForm.add(lblStep3, gbc);
         
-        // Nút tăng/giảm số lượng
-        JButton btnGiam = new JButton("-");
-        btnGiam.setPreferredSize(new Dimension(45, 30));
+        gbc.gridy = 7;
+        gbc.insets = new Insets(10, 0, 10, 0);
+        JPanel pnlSoLuong = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        pnlSoLuong.setOpaque(false);
+        
+        JButton btnGiam = UIUtils.createIconButton("-", UIUtils.DANGER_COLOR, UIUtils.DANGER_DARK);
+        btnGiam.setPreferredSize(new Dimension(45, 45));
         btnGiam.addActionListener(e -> {
             try {
                 int sl = Integer.parseInt(txtSoLuong.getText());
@@ -130,9 +222,22 @@ public class QuanLyVeThongKeForm extends JFrame {
                 }
             } catch (Exception ex) {}
         });
+        pnlSoLuong.add(btnGiam);
         
-        JButton btnTang = new JButton("+");
-        btnTang.setPreferredSize(new Dimension(45, 30));
+        txtSoLuong = new JTextField("1", 8);
+        txtSoLuong.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        txtSoLuong.setHorizontalAlignment(JTextField.CENTER);
+        UIUtils.styleTextField(txtSoLuong);
+        txtSoLuong.setPreferredSize(new Dimension(100, 45));
+        txtSoLuong.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                tinhThanhTien();
+            }
+        });
+        pnlSoLuong.add(txtSoLuong);
+        
+        JButton btnTang = UIUtils.createIconButton("+", UIUtils.SUCCESS_COLOR, UIUtils.SUCCESS_DARK);
+        btnTang.setPreferredSize(new Dimension(45, 45));
         btnTang.addActionListener(e -> {
             try {
                 int sl = Integer.parseInt(txtSoLuong.getText());
@@ -140,52 +245,80 @@ public class QuanLyVeThongKeForm extends JFrame {
                 tinhThanhTien();
             } catch (Exception ex) {}
         });
-        
-        pnlSoLuong.add(btnGiam);
-        pnlSoLuong.add(txtSoLuong);
         pnlSoLuong.add(btnTang);
+        
         pnlForm.add(pnlSoLuong, gbc);
         
-        // ← THÀNH TIỀN (tự động tính)
-        gbc.gridx = 0; gbc.gridy = 5;
-        pnlForm.add(new JLabel("💵 Thành Tiền:"), gbc);
-        gbc.gridx = 1;
-        lblThanhTien = new JLabel("0 VNĐ");
-        lblThanhTien.setFont(new Font("Arial", Font.BOLD, 22));
-        lblThanhTien.setForeground(new Color(231, 76, 60));
-        pnlForm.add(lblThanhTien, gbc);
+        // Thành tiền
+        gbc.gridy = 8;
+        gbc.insets = new Insets(20, 0, 20, 0);
+        JPanel pnlThanhTien = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                GradientPaint gradient = new GradientPaint(
+                    0, 0, new Color(239, 68, 68, 30),
+                    getWidth(), 0, new Color(220, 38, 38, 30)
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+            }
+        };
+        pnlThanhTien.setOpaque(false);
+        pnlThanhTien.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         
-        // Separator
-        gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2;
-        pnlForm.add(new JSeparator(), gbc);
+        JLabel lblThanhTienText = new JLabel("💵 TỔNG THANH TOÁN:");
+        lblThanhTienText.setFont(UIUtils.FONT_BODY);
+        lblThanhTienText.setForeground(UIUtils.TEXT_SECONDARY);
+        pnlThanhTien.add(lblThanhTienText, BorderLayout.NORTH);
+        
+        lblThanhTien = new JLabel("0 VNĐ");
+        lblThanhTien.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblThanhTien.setForeground(new Color(239, 68, 68));
+        pnlThanhTien.add(lblThanhTien, BorderLayout.CENTER);
+        
+        pnlForm.add(pnlThanhTien, gbc);
         
         // Buttons
-        gbc.gridx = 0; gbc.gridy = 7; gbc.gridwidth = 2;
-        JPanel pnlButtons = new JPanel(new GridLayout(1, 2, 15, 0));
-        btnBanVe = new JButton("💳 Bán Vé");
-        btnLamMoi = new JButton("🔄 Làm Mới");
+        gbc.gridy = 9;
+        gbc.insets = new Insets(10, 0, 0, 0);
+        JPanel pnlButtons = new JPanel(new GridLayout(1, 2, 12, 0));
+        pnlButtons.setBackground(Color.WHITE);
         
-        btnBanVe.setBackground(new Color(46, 204, 113));
-        btnBanVe.setForeground(Color.WHITE);
-        btnBanVe.setFont(new Font("Arial", Font.BOLD, 16));
-        btnBanVe.setPreferredSize(new Dimension(140, 45));
+        btnBanVe = UIUtils.createSuccessButton("💳 BÁN VÉ");
+        btnBanVe.setPreferredSize(new Dimension(0, 50));
         
-        btnLamMoi.setBackground(new Color(149, 165, 166));
-        btnLamMoi.setForeground(Color.WHITE);
-        btnLamMoi.setFont(new Font("Arial", Font.BOLD, 14));
-        btnLamMoi.setPreferredSize(new Dimension(140, 45));
+        btnLamMoi = UIUtils.createSecondaryButton("🔄 Làm Mới");
+        btnLamMoi.setPreferredSize(new Dimension(0, 50));
         
         pnlButtons.add(btnBanVe);
         pnlButtons.add(btnLamMoi);
         pnlForm.add(pnlButtons, gbc);
         
-        // Panel table vé (Phải)
-        JPanel pnlTableVe = new JPanel(new BorderLayout());
-        pnlTableVe.setBorder(BorderFactory.createTitledBorder("📋 Danh Sách Vé Đã Bán"));
+        wrapper.add(pnlForm, BorderLayout.CENTER);
         
-        String[] columnNamesVe = {"Mã Vé", "Mã Suất", "Tên Phim", "Phòng", 
-                                  "Ngày Chiếu", "Giờ", "Giá Vé", "SL", "Thành Tiền"};
-        tableModelVe = new DefaultTableModel(columnNamesVe, 0) {
+        // Events
+        btnBanVe.addActionListener(e -> banVe());
+        btnLamMoi.addActionListener(e -> lamMoi());
+        
+        return wrapper;
+    }
+    
+    private JPanel createTableVe() {
+        JPanel wrapper = UIUtils.createCardPanel();
+        wrapper.setLayout(new BorderLayout(0, 15));
+        
+        JLabel lblTitle = new JLabel("📋 Danh Sách Vé Đã Bán");
+        lblTitle.setFont(UIUtils.FONT_HEADING);
+        lblTitle.setForeground(UIUtils.TEXT_PRIMARY);
+        wrapper.add(lblTitle, BorderLayout.NORTH);
+        
+        String[] columnNames = {"Mã Vé", "Mã Suất", "Tên Phim", "Phòng", 
+                                "Ngày", "Giờ", "Giá Vé", "SL", "Thành Tiền"};
+        tableModelVe = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -193,126 +326,191 @@ public class QuanLyVeThongKeForm extends JFrame {
         };
         tableVe = new JTable(tableModelVe);
         tableVe.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        tableVe.setFont(new Font("Arial", Font.PLAIN, 12));
-        tableVe.setRowHeight(25);
+        UIUtils.styleTable(tableVe);
+        
+        tableVe.getColumnModel().getColumn(0).setPreferredWidth(60);
+        tableVe.getColumnModel().getColumn(1).setPreferredWidth(70);
+        tableVe.getColumnModel().getColumn(2).setPreferredWidth(180);
+        tableVe.getColumnModel().getColumn(3).setPreferredWidth(80);
+        tableVe.getColumnModel().getColumn(4).setPreferredWidth(100);
+        tableVe.getColumnModel().getColumn(5).setPreferredWidth(80);
+        tableVe.getColumnModel().getColumn(6).setPreferredWidth(90);
+        tableVe.getColumnModel().getColumn(7).setPreferredWidth(50);
+        tableVe.getColumnModel().getColumn(8).setPreferredWidth(100);
+        
         JScrollPane scrollVe = new JScrollPane(tableVe);
-        pnlTableVe.add(scrollVe, BorderLayout.CENTER);
+        scrollVe.setBorder(BorderFactory.createLineBorder(UIUtils.BORDER_COLOR));
+        wrapper.add(scrollVe, BorderLayout.CENTER);
         
-        pnlQuanLyVe.add(pnlForm, BorderLayout.WEST);
-        pnlQuanLyVe.add(pnlTableVe, BorderLayout.CENTER);
+        return wrapper;
+    }
+    
+    // ========== TAB THỐNG KÊ ==========
+    private JPanel createThongKePanel() {
+        JPanel panel = new JPanel(new BorderLayout(15, 15));
+        panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // ========== TAB THỐNG KÊ ==========
-        JPanel pnlThongKe = new JPanel(new BorderLayout(10, 10));
-        pnlThongKe.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // TOP: Stats cards
+        JPanel pnlStats = createStatsPanel();
+        panel.add(pnlStats, BorderLayout.NORTH);
         
-        // Panel header với bộ lọc
-        JPanel pnlHeaderTK = new JPanel(new BorderLayout());
+        // CENTER: Table + Filter
+        JPanel pnlCenter = new JPanel(new BorderLayout(0, 15));
+        pnlCenter.setOpaque(false);
         
-        // Thống kê tổng quan
-        JPanel pnlStats = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 10));
-        pnlStats.setBorder(BorderFactory.createTitledBorder("📊 Tổng Quan"));
+        // Filter
+        JPanel pnlFilter = createFilterPanel();
+        pnlCenter.add(pnlFilter, BorderLayout.NORTH);
         
-        lblTongVe = new JLabel("Tổng số vé: 0");
-        lblTongVe.setFont(new Font("Arial", Font.BOLD, 16));
-        lblTongVe.setForeground(new Color(41, 128, 185));
+        // Table
+        JPanel pnlTable = createTableThongKe();
+        pnlCenter.add(pnlTable, BorderLayout.CENTER);
         
-        lblTongDoanhThu = new JLabel("Tổng doanh thu: 0 VNĐ");
-        lblTongDoanhThu.setFont(new Font("Arial", Font.BOLD, 16));
-        lblTongDoanhThu.setForeground(new Color(39, 174, 96));
+        panel.add(pnlCenter, BorderLayout.CENTER);
         
-        btnCapNhatTK = new JButton("🔄 Cập Nhật");
-        btnCapNhatTK.setBackground(new Color(52, 152, 219));
-        btnCapNhatTK.setForeground(Color.WHITE);
-        btnCapNhatTK.setFont(new Font("Arial", Font.BOLD, 12));
+        return panel;
+    }
+    
+    private JPanel createStatsPanel() {
+        JPanel panel = new JPanel(new GridLayout(1, 2, 20, 0));
+        panel.setOpaque(false);
+        panel.setPreferredSize(new Dimension(0, 120));
         
-        pnlStats.add(lblTongVe);
-        pnlStats.add(new JLabel("|"));
-        pnlStats.add(lblTongDoanhThu);
-        pnlStats.add(btnCapNhatTK);
+        // Card 1: Tổng vé
+        JPanel card1 = UIUtils.createStatsCard(
+            "TỔNG SỐ VÉ ĐÃ BÁN",
+            "0",
+            "🎫",
+            new Color(59, 130, 246)
+        );
+        panel.add(card1);
         
-        // Bộ lọc thống kê
-        JPanel pnlFilter = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        pnlFilter.setBorder(BorderFactory.createTitledBorder("🔍 Bộ Lọc"));
+        // Card 2: Doanh thu
+        JPanel card2 = UIUtils.createStatsCard(
+            "TỔNG DOANH THU",
+            "0 VNĐ",
+            "💰",
+            new Color(34, 197, 94)
+        );
+        panel.add(card2);
         
-        pnlFilter.add(new JLabel("Loại:"));
+        // Lưu reference để update
+        lblTongVe = (JLabel) ((JPanel)card1.getComponent(1)).getComponent(1);
+        lblTongDoanhThu = (JLabel) ((JPanel)card2.getComponent(1)).getComponent(1);
+        
+        return panel;
+    }
+    
+    private JPanel createFilterPanel() {
+        JPanel wrapper = UIUtils.createCardPanel();
+        wrapper.setLayout(new BorderLayout(15, 0));
+        
+        JLabel lblTitle = new JLabel("🔍 Bộ Lọc Thống Kê");
+        lblTitle.setFont(UIUtils.FONT_SUBHEADING);
+        lblTitle.setForeground(UIUtils.TEXT_PRIMARY);
+        wrapper.add(lblTitle, BorderLayout.WEST);
+        
+        JPanel pnlControls = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
+        pnlControls.setBackground(Color.WHITE);
+        
+        JLabel lblLoai = new JLabel("Loại:");
+        lblLoai.setFont(UIUtils.FONT_BODY);
+        pnlControls.add(lblLoai);
+        
         cboLoaiThongKe = new JComboBox<>(new String[]{
             "Theo Phim", "Theo Ngày", "Theo Tuần", "Theo Tháng", "Theo Năm"
         });
-        pnlFilter.add(cboLoaiThongKe);
+        UIUtils.styleComboBox(cboLoaiThongKe);
+        cboLoaiThongKe.setPreferredSize(new Dimension(130, 36));
+        pnlControls.add(cboLoaiThongKe);
         
-        pnlFilter.add(new JLabel("  Từ ngày:"));
+        pnlControls.add(new JLabel("  "));
+        
+        JLabel lblTuNgay = new JLabel("Từ ngày:");
+        lblTuNgay.setFont(UIUtils.FONT_BODY);
+        pnlControls.add(lblTuNgay);
+        
         txtTuNgay = new JTextField(10);
-        txtTuNgay.setToolTipText("yyyy-MM-dd");
-        pnlFilter.add(txtTuNgay);
+        UIUtils.styleTextField(txtTuNgay);
+        txtTuNgay.setPreferredSize(new Dimension(120, 36));
+        pnlControls.add(txtTuNgay);
         
-        pnlFilter.add(new JLabel("Đến ngày:"));
+        JLabel lblDenNgay = new JLabel("Đến:");
+        lblDenNgay.setFont(UIUtils.FONT_BODY);
+        pnlControls.add(lblDenNgay);
+        
         txtDenNgay = new JTextField(10);
-        txtDenNgay.setToolTipText("yyyy-MM-dd");
-        pnlFilter.add(txtDenNgay);
+        UIUtils.styleTextField(txtDenNgay);
+        txtDenNgay.setPreferredSize(new Dimension(120, 36));
+        pnlControls.add(txtDenNgay);
         
-        pnlFilter.add(new JLabel("  Năm:"));
-        txtNamThongKe = new JTextField(6);
-        txtNamThongKe.setText("2024");
-        pnlFilter.add(txtNamThongKe);
+        pnlControls.add(new JLabel("  "));
         
-        btnLocThongKe = new JButton("📊 Lọc");
-        btnLocThongKe.setBackground(new Color(241, 196, 15));
-        pnlFilter.add(btnLocThongKe);
+        JLabel lblNam = new JLabel("Năm:");
+        lblNam.setFont(UIUtils.FONT_BODY);
+        pnlControls.add(lblNam);
         
-        JPanel pnlTop = new JPanel(new GridLayout(2, 1));
-        pnlTop.add(pnlStats);
-        pnlTop.add(pnlFilter);
-        pnlHeaderTK.add(pnlTop, BorderLayout.CENTER);
-        pnlThongKe.add(pnlHeaderTK, BorderLayout.NORTH);
+        txtNamThongKe = new JTextField("2024", 6);
+        UIUtils.styleTextField(txtNamThongKe);
+        txtNamThongKe.setPreferredSize(new Dimension(80, 36));
+        pnlControls.add(txtNamThongKe);
         
-        // Table thống kê
-        JPanel pnlTableTK = new JPanel(new BorderLayout());
-        pnlTableTK.setBorder(BorderFactory.createTitledBorder("📈 Kết Quả Thống Kê"));
+        btnLocThongKe = UIUtils.createWarningButton("📊 Lọc");
+        pnlControls.add(btnLocThongKe);
         
-        String[] columnNamesTK = {"STT", "Tiêu Chí", "Số Vé Bán", "Doanh Thu (VNĐ)"};
-        tableModelThongKe = new DefaultTableModel(columnNamesTK, 0) {
+        btnCapNhatTK = UIUtils.createInfoButton("🔄 Cập Nhật");
+        pnlControls.add(btnCapNhatTK);
+        
+        wrapper.add(pnlControls, BorderLayout.CENTER);
+        
+        // Events
+        btnLocThongKe.addActionListener(e -> locThongKe());
+        btnCapNhatTK.addActionListener(e -> loadThongKe());
+        
+        return wrapper;
+    }
+    
+    private JPanel createTableThongKe() {
+        JPanel wrapper = UIUtils.createCardPanel();
+        wrapper.setLayout(new BorderLayout());
+        
+        String[] columnNames = {"STT", "Tiêu Chí", "Số Vé Bán", "Doanh Thu (VNĐ)"};
+        tableModelThongKe = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
         tableThongKe = new JTable(tableModelThongKe);
-        tableThongKe.setFont(new Font("Arial", Font.PLAIN, 12));
-        tableThongKe.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
-        tableThongKe.setRowHeight(25);
+        UIUtils.styleTable(tableThongKe);
+        
+        tableThongKe.getColumnModel().getColumn(0).setPreferredWidth(60);
+        tableThongKe.getColumnModel().getColumn(1).setPreferredWidth(300);
+        tableThongKe.getColumnModel().getColumn(2).setPreferredWidth(120);
+        tableThongKe.getColumnModel().getColumn(3).setPreferredWidth(150);
+        
         JScrollPane scrollTK = new JScrollPane(tableThongKe);
-        pnlTableTK.add(scrollTK, BorderLayout.CENTER);
-        pnlThongKe.add(pnlTableTK, BorderLayout.CENTER);
+        scrollTK.setBorder(BorderFactory.createLineBorder(UIUtils.BORDER_COLOR));
+        wrapper.add(scrollTK, BorderLayout.CENTER);
         
-        // Add tabs
-        tabbedPane.addTab("🎫 Quản Lý Vé", pnlQuanLyVe);
-        tabbedPane.addTab("📊 Thống Kê", pnlThongKe);
-        add(tabbedPane);
-        
-        // Event handlers
-        btnBanVe.addActionListener(e -> banVe());
-        btnLamMoi.addActionListener(e -> lamMoi());
-        btnCapNhatTK.addActionListener(e -> loadThongKe());
-        btnLocThongKe.addActionListener(e -> locThongKe());
+        return wrapper;
     }
     
-    // ← MỚI: Load danh sách phim
+    // ========== METHODS ==========
+    
     private void loadComboBoxPhim() {
         try {
             cboPhim.removeAllItems();
             List<Phim> danhSachPhim = phimDAO.layDanhSachPhim();
             
             if (danhSachPhim.isEmpty()) {
-                JOptionPane.showMessageDialog(this, 
-                    "Chưa có phim nào!", 
-                    "Thông báo", 
-                    JOptionPane.WARNING_MESSAGE);
+                UIUtils.showWarningMessage(this, "Chưa có phim nào!");
                 return;
             }
             
-            cboPhim.addItem("-- Chọn phim --");  // Item mặc định
+            cboPhim.addItem("-- Chọn phim --");
             for (Phim phim : danhSachPhim) {
-                // Format: MaPhim - TenPhim (TheLoai, ThoiLuong phút)
                 String item = String.format("%d - %s (%s, %d phút)", 
                     phim.getMaPhim(), 
                     phim.getTenPhim(),
@@ -321,13 +519,10 @@ public class QuanLyVeThongKeForm extends JFrame {
                 cboPhim.addItem(item);
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Lỗi load danh sách phim: " + e.getMessage());
-            e.printStackTrace();
+            UIUtils.showErrorMessage(this, "Lỗi load phim: " + e.getMessage());
         }
     }
     
-    // ← MỚI: Load suất chiếu theo phim đã chọn
     private void loadSuatChieuTheoPhim() {
         try {
             cboSuatChieu.removeAllItems();
@@ -335,23 +530,21 @@ public class QuanLyVeThongKeForm extends JFrame {
             lblThanhTien.setText("0 VNĐ");
             lblThongTinPhim.setText("<html><i>Chọn phim để xem thông tin</i></html>");
             
-            if (cboPhim.getSelectedIndex() == 0) return;  // "-- Chọn phim --"
+            if (cboPhim.getSelectedIndex() == 0) return;
             
             int maPhim = getMaPhimFromCombo();
             if (maPhim == 0) return;
             
-            // Hiển thị thông tin phim
             Phim phim = phimDAO.layPhimTheoMa(maPhim);
             if (phim != null) {
                 lblThongTinPhim.setText(String.format(
-                    "<html><b>%s</b><br/>Thể loại: %s | Thời lượng: %d phút</html>",
+                    "<html><b>%s</b> | %s | %d phút</html>",
                     phim.getTenPhim(),
                     phim.getTheLoai() != null ? phim.getTheLoai() : "N/A",
                     phim.getThoiLuong()
                 ));
             }
             
-            // Load suất chiếu của phim này
             List<SuatChieu> danhSach = suatChieuDAO.layDanhSachSuatChieu();
             boolean coSuatChieu = false;
             
@@ -359,8 +552,7 @@ public class QuanLyVeThongKeForm extends JFrame {
                 if (sc.getMaPhim() == maPhim) {
                     coSuatChieu = true;
                     int conTrong = sc.getSoGhe() - sc.getSoVeDaBan();
-                    // Format: Ngày Giờ (Phòng) - GiaVe VNĐ | Còn X ghế
-                    String item = String.format("%d - %s %s (%s) - %,d VNĐ | Còn %d ghế", 
+                    String item = String.format("%d - %s %s (%s) - %,d VNĐ | Còn %d", 
                         sc.getMaSuat(), 
                         sc.getNgayChieu(), 
                         sc.getGioChieu(),
@@ -373,32 +565,13 @@ public class QuanLyVeThongKeForm extends JFrame {
             
             if (!coSuatChieu) {
                 cboSuatChieu.addItem("-- Phim này chưa có suất chiếu --");
-                JOptionPane.showMessageDialog(this, 
-                    "Phim này chưa có suất chiếu nào!", 
-                    "Thông báo", 
-                    JOptionPane.INFORMATION_MESSAGE);
+                UIUtils.showWarningMessage(this, "Phim này chưa có suất chiếu!");
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Lỗi load suất chiếu: " + e.getMessage());
-            e.printStackTrace();
+            UIUtils.showErrorMessage(this, "Lỗi: " + e.getMessage());
         }
     }
     
-    // ← Lấy mã phim từ combo
-    private int getMaPhimFromCombo() {
-        try {
-            String selected = (String) cboPhim.getSelectedItem();
-            if (selected != null && !selected.startsWith("--") && selected.contains(" - ")) {
-                return Integer.parseInt(selected.split(" - ")[0].trim());
-            }
-        } catch (Exception e) {
-            System.err.println("Lỗi getMaPhimFromCombo: " + e.getMessage());
-        }
-        return 0;
-    }
-    
-    // Hiển thị giá vé khi chọn suất chiếu
     private void hienThiGiaVe() {
         try {
             int maSuat = getMaSuatFromCombo();
@@ -410,11 +583,10 @@ public class QuanLyVeThongKeForm extends JFrame {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Lỗi hiển thị giá vé: " + e.getMessage());
+            System.err.println("Lỗi: " + e.getMessage());
         }
     }
     
-    // Tính thành tiền tự động
     private void tinhThanhTien() {
         try {
             String giaVeStr = lblGiaVe.getText().replace(",", "").replace(" VNĐ", "").trim();
@@ -426,6 +598,126 @@ public class QuanLyVeThongKeForm extends JFrame {
         } catch (Exception e) {
             lblThanhTien.setText("0 VNĐ");
         }
+    }
+    
+    private int getMaPhimFromCombo() {
+        try {
+            String selected = (String) cboPhim.getSelectedItem();
+            if (selected != null && !selected.startsWith("--") && selected.contains(" - ")) {
+                return Integer.parseInt(selected.split(" - ")[0].trim());
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi: " + e.getMessage());
+        }
+        return 0;
+    }
+    
+    private int getMaSuatFromCombo() {
+        try {
+            String selected = (String) cboSuatChieu.getSelectedItem();
+            if (selected != null && !selected.startsWith("--") && selected.contains(" - ")) {
+                return Integer.parseInt(selected.split(" - ")[0].trim());
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi: " + e.getMessage());
+        }
+        return 0;
+    }
+    
+    private boolean validateInput() {
+        if (cboPhim.getSelectedIndex() == 0) {
+            UIUtils.showWarningMessage(this, "Vui lòng chọn phim!");
+            return false;
+        }
+        
+        if (cboSuatChieu.getSelectedItem() == null || 
+            cboSuatChieu.getSelectedItem().toString().startsWith("--")) {
+            UIUtils.showWarningMessage(this, "Vui lòng chọn suất chiếu!");
+            return false;
+        }
+        
+        try {
+            int soLuong = Integer.parseInt(txtSoLuong.getText().trim());
+            if (soLuong <= 0) {
+                UIUtils.showWarningMessage(this, "Số lượng phải > 0!");
+                txtSoLuong.requestFocus();
+                return false;
+            }
+            
+            int maSuat = getMaSuatFromCombo();
+            if (!veDAO.kiemTraConGheTrong(maSuat, soLuong)) {
+                UIUtils.showWarningMessage(this, 
+                    "⚠️ Không đủ ghế trống!\nVui lòng giảm số lượng.");
+                return false;
+            }
+            
+        } catch (NumberFormatException e) {
+            UIUtils.showWarningMessage(this, "Số lượng phải là số nguyên!");
+            txtSoLuong.requestFocus();
+            return false;
+        }
+        
+        return true;
+    }
+    
+    private void banVe() {
+        if (!validateInput()) return;
+        
+        try {
+            int maSuat = getMaSuatFromCombo();
+            SuatChieu sc = suatChieuDAO.laySuatChieuTheoMa(maSuat);
+            
+            Ve ve = new Ve();
+            ve.setMaSuat(maSuat);
+            ve.setGiaVe(sc.getGiaVe());
+            ve.setSoLuong(Integer.parseInt(txtSoLuong.getText().trim()));
+            
+            if (veDAO.banVe(ve)) {
+                int thanhTien = ve.getGiaVe() * ve.getSoLuong();
+                
+                String thongBao = String.format(
+                    "✅ BÁN VÉ THÀNH CÔNG!\n\n" +
+                    "━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+                    "🎬 Phim: %s\n" +
+                    "📅 Ngày: %s\n" +
+                    "🕐 Giờ: %s\n" +
+                    "🏠 Phòng: %s\n" +
+                    "🎫 Số lượng: %d vé\n" +
+                    "💰 Giá vé: %,d VNĐ\n" +
+                    "━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+                    "💵 TỔNG TIỀN: %,d VNĐ",
+                    sc.getTenPhim(),
+                    sc.getNgayChieu(),
+                    sc.getGioChieu(),
+                    sc.getTenPhong(),
+                    ve.getSoLuong(),
+                    ve.getGiaVe(),
+                    thanhTien
+                );
+                
+                JOptionPane.showMessageDialog(this, 
+                    thongBao, 
+                    "Thành công", 
+                    JOptionPane.INFORMATION_MESSAGE);
+                lamMoi();
+            } else {
+                UIUtils.showErrorMessage(this, "Bán vé thất bại!");
+            }
+        } catch (Exception ex) {
+            UIUtils.showErrorMessage(this, "Lỗi: " + ex.getMessage());
+        }
+    }
+    
+    private void lamMoi() {
+        txtSoLuong.setText("1");
+        lblGiaVe.setText("0 VNĐ");
+        lblThanhTien.setText("0 VNĐ");
+        lblThongTinPhim.setText("<html><i>Chọn phim để xem thông tin</i></html>");
+        cboPhim.setSelectedIndex(0);
+        cboSuatChieu.removeAllItems();
+        loadComboBoxPhim();
+        loadDataVe();
+        loadThongKe();
     }
     
     private void loadDataVe() {
@@ -448,9 +740,7 @@ public class QuanLyVeThongKeForm extends JFrame {
                 tableModelVe.addRow(row);
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Lỗi load danh sách vé: " + e.getMessage());
-            e.printStackTrace();
+            UIUtils.showErrorMessage(this, "Lỗi: " + e.getMessage());
         }
     }
     
@@ -462,12 +752,10 @@ public class QuanLyVeThongKeForm extends JFrame {
             int tongVe = thongKeDAO.demTongSoVe();
             long tongDoanhThu = thongKeDAO.tinhTongDoanhThu();
             
-            lblTongVe.setText(String.format("Tổng số vé: %,d", tongVe));
-            lblTongDoanhThu.setText(String.format("Tổng doanh thu: %,d VNĐ", tongDoanhThu));
+            lblTongVe.setText(String.format("%,d", tongVe));
+            lblTongDoanhThu.setText(String.format("%,d VNĐ", tongDoanhThu));
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, 
-                "Lỗi load thống kê: " + e.getMessage());
-            e.printStackTrace();
+            UIUtils.showErrorMessage(this, "Lỗi: " + e.getMessage());
         }
     }
     
@@ -484,8 +772,7 @@ public class QuanLyVeThongKeForm extends JFrame {
                 case "Theo Năm": thongKeTheoNam(); break;
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage());
-            e.printStackTrace();
+            UIUtils.showErrorMessage(this, "Lỗi: " + e.getMessage());
         }
     }
     
@@ -522,7 +809,7 @@ public class QuanLyVeThongKeForm extends JFrame {
                 tableModelThongKe.addRow(row);
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập đúng định dạng ngày (yyyy-MM-dd)");
+            UIUtils.showWarningMessage(this, "Vui lòng nhập đúng định dạng ngày (yyyy-MM-dd)");
         }
     }
     
@@ -540,7 +827,7 @@ public class QuanLyVeThongKeForm extends JFrame {
                 });
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập năm hợp lệ");
+            UIUtils.showWarningMessage(this, "Vui lòng nhập năm hợp lệ");
         }
     }
     
@@ -558,7 +845,7 @@ public class QuanLyVeThongKeForm extends JFrame {
                 });
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập năm hợp lệ");
+            UIUtils.showWarningMessage(this, "Vui lòng nhập năm hợp lệ");
         }
     }
     
@@ -575,121 +862,13 @@ public class QuanLyVeThongKeForm extends JFrame {
         }
     }
     
-    private int getMaSuatFromCombo() {
-        try {
-            String selected = (String) cboSuatChieu.getSelectedItem();
-            if (selected != null && !selected.startsWith("--") && selected.contains(" - ")) {
-                return Integer.parseInt(selected.split(" - ")[0].trim());
-            }
-        } catch (Exception e) {
-            System.err.println("Lỗi getMaSuatFromCombo: " + e.getMessage());
-        }
-        return 0;
-    }
-    
-    private boolean validateInput() {
-        if (cboPhim.getSelectedIndex() == 0) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn phim!");
-            return false;
-        }
-        
-        if (cboSuatChieu.getSelectedItem() == null || 
-            cboSuatChieu.getSelectedItem().toString().startsWith("--")) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn suất chiếu!");
-            return false;
-        }
-        
-        try {
-            int soLuong = Integer.parseInt(txtSoLuong.getText().trim());
-            if (soLuong <= 0) {
-                JOptionPane.showMessageDialog(this, "Số lượng phải > 0!");
-                txtSoLuong.requestFocus();
-                return false;
-            }
-            
-            // Kiểm tra còn ghế trống không
-            int maSuat = getMaSuatFromCombo();
-            if (!veDAO.kiemTraConGheTrong(maSuat, soLuong)) {
-                JOptionPane.showMessageDialog(this, 
-                    "⚠️ Không đủ ghế trống!\nVui lòng giảm số lượng.",
-                    "Hết chỗ",
-                    JOptionPane.WARNING_MESSAGE);
-                return false;
-            }
-            
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Số lượng phải là số nguyên!");
-            txtSoLuong.requestFocus();
-            return false;
-        }
-        
-        return true;
-    }
-    
-    private void banVe() {
-        if (!validateInput()) return;
-        
-        try {
-            int maSuat = getMaSuatFromCombo();
-            SuatChieu sc = suatChieuDAO.laySuatChieuTheoMa(maSuat);
-            
-            Ve ve = new Ve();
-            ve.setMaSuat(maSuat);
-            ve.setGiaVe(sc.getGiaVe());
-            ve.setSoLuong(Integer.parseInt(txtSoLuong.getText().trim()));
-            
-            if (veDAO.banVe(ve)) {
-                int thanhTien = ve.getGiaVe() * ve.getSoLuong();
-                
-                // Hiển thị thông báo chi tiết
-                String thongBao = String.format(
-                    "✅ BÁN VÉ THÀNH CÔNG!\n\n" +
-                    "━━━━━━━━━━━━━━━━━━━━━━━━\n" +
-                    "🎬 Phim: %s\n" +
-                    "📅 Ngày: %s\n" +
-                    "🕐 Giờ: %s\n" +
-                    "🏠 Phòng: %s\n" +
-                    "🎫 Số lượng: %d vé\n" +
-                    "💰 Giá vé: %,d VNĐ\n" +
-                    "━━━━━━━━━━━━━━━━━━━━━━━━\n" +
-                    "💵 TỔNG TIỀN: %,d VNĐ",
-                    sc.getTenPhim(),
-                    sc.getNgayChieu(),
-                    sc.getGioChieu(),
-                    sc.getTenPhong(),
-                    ve.getSoLuong(),
-                    ve.getGiaVe(),
-                    thanhTien
-                );
-                
-                JOptionPane.showMessageDialog(this, 
-                    thongBao, 
-                    "Thành công", 
-                    JOptionPane.INFORMATION_MESSAGE);
-                lamMoi();
-            } else {
-                JOptionPane.showMessageDialog(this, "Bán vé thất bại!");
-            }
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage());
-            ex.printStackTrace();
-        }
-    }
-    
-    private void lamMoi() {
-        txtSoLuong.setText("1");
-        lblGiaVe.setText("0 VNĐ");
-        lblThanhTien.setText("0 VNĐ");
-        lblThongTinPhim.setText("<html><i>Chọn phim để xem thông tin</i></html>");
-        cboPhim.setSelectedIndex(0);
-        cboSuatChieu.removeAllItems();
-        loadComboBoxPhim();
-        loadDataVe();
-        loadThongKe();
-    }
-    
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             new QuanLyVeThongKeForm().setVisible(true);
         });
     }
