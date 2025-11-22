@@ -85,7 +85,7 @@ public class QuanLyPhimForm extends JFrame {
         
         // === LEFT: FORM PANEL ===
         JPanel pnlFormWrapper = createFormPanel();
-        pnlFormWrapper.setPreferredSize(new Dimension(500, 0));  // Tăng lên 500px
+        pnlFormWrapper.setPreferredSize(new Dimension(500, 0));
         
         // === RIGHT: TABLE PANEL ===
         JPanel pnlTableWrapper = createTablePanel();
@@ -129,7 +129,7 @@ public class QuanLyPhimForm extends JFrame {
         txtMaPhim.setEditable(false);
         txtMaPhim.setBackground(UIUtils.GRAY_100);
         UIUtils.styleTextField(txtMaPhim);
-        txtMaPhim.setPreferredSize(new Dimension(0, 36));  // Giảm từ 40->36
+        txtMaPhim.setPreferredSize(new Dimension(0, 36));
         pnlForm.add(txtMaPhim, gbc);
         
         // Tên phim
@@ -142,7 +142,7 @@ public class QuanLyPhimForm extends JFrame {
         gbc.gridy = 3;
         txtTenPhim = new JTextField();
         UIUtils.styleTextField(txtTenPhim);
-        txtTenPhim.setPreferredSize(new Dimension(0, 36));  // 36px
+        txtTenPhim.setPreferredSize(new Dimension(0, 36));
         pnlForm.add(txtTenPhim, gbc);
         
         // Thể loại
@@ -155,7 +155,7 @@ public class QuanLyPhimForm extends JFrame {
         gbc.gridy = 5;
         txtTheLoai = new JTextField();
         UIUtils.styleTextField(txtTheLoai);
-        txtTheLoai.setPreferredSize(new Dimension(0, 36));  // 36px
+        txtTheLoai.setPreferredSize(new Dimension(0, 36));
         pnlForm.add(txtTheLoai, gbc);
         
         // Thời lượng
@@ -168,7 +168,7 @@ public class QuanLyPhimForm extends JFrame {
         gbc.gridy = 7;
         txtThoiLuong = new JTextField();
         UIUtils.styleTextField(txtThoiLuong);
-        txtThoiLuong.setPreferredSize(new Dimension(0, 36));  // 36px
+        txtThoiLuong.setPreferredSize(new Dimension(0, 36));
         pnlForm.add(txtThoiLuong, gbc);
         
         // Mô tả
@@ -226,7 +226,12 @@ public class QuanLyPhimForm extends JFrame {
         
         pnlForm.add(pnlButtonsWrapper, gbc);
         
-        wrapper.add(pnlForm, BorderLayout.CENTER);
+        // ✅✅✅ THÊM SCROLLPANE - PHẦN SỬA CHÍNH ✅✅✅
+        JScrollPane scrollForm = new JScrollPane(pnlForm);
+        scrollForm.setBorder(null);
+        scrollForm.getVerticalScrollBar().setUnitIncrement(16);
+        wrapper.add(scrollForm, BorderLayout.CENTER);
+        // ✅✅✅ HẾT PHẦN THÊM ✅✅✅
         
         // Events
         btnThem.addActionListener(e -> themPhim());

@@ -151,11 +151,11 @@ public class MainMenuForm extends JFrame {
         JPanel pnlFooter = new JPanel(new FlowLayout(FlowLayout.CENTER, 30, 15));
         pnlFooter.setOpaque(false);
         
-        JLabel lblCopyright = new JLabel("© 2024 Cinema Management System");
+        JLabel lblCopyright = new JLabel("Rạp phim này vui");
         lblCopyright.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblCopyright.setForeground(UIUtils.TEXT_SECONDARY);
         
-        JLabel lblVersion = new JLabel("• Version 2.0");
+        JLabel lblVersion = new JLabel("Code này sửa lại lần thứ n");
         lblVersion.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblVersion.setForeground(UIUtils.TEXT_SECONDARY);
         

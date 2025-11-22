@@ -102,8 +102,22 @@ public class QuanLyVeThongKeForm extends JFrame {
         tabbedPane.setFont(UIUtils.FONT_SUBHEADING);
         tabbedPane.setBackground(Color.WHITE);
         
-        tabbedPane.addTab("  🎫 Bán Vé  ", createBanVePanel());
-        tabbedPane.addTab("  📊 Thống Kê  ", createThongKePanel());
+       tabbedPane.addTab(
+    "  🎫 Bán Vé  ",
+    // Giữ JScrollPane bao ngoài cho Tab Bán Vé
+    new JScrollPane(createBanVePanel(),
+        JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+        JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
+);
+
+tabbedPane.addTab(
+    "  📊 Thống Kê  ",
+    // Giữ JScrollPane bao ngoài cho Tab Thống Kê
+    new JScrollPane(createThongKePanel(),
+        JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+        JScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
+);
+
         
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
     }
@@ -116,12 +130,18 @@ public class QuanLyVeThongKeForm extends JFrame {
         
         // LEFT: Form bán vé
         JPanel pnlFormWrapper = createFormBanVe();
-        pnlFormWrapper.setPreferredSize(new Dimension(480, 0));
+        
+        // SỬA ĐỔI: Bọc pnlFormWrapper vào JScrollPane
+        JScrollPane scrollForm = new JScrollPane(pnlFormWrapper);
+        scrollForm.setBorder(null); // Không có border cho scroll pane
+        scrollForm.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollForm.setPreferredSize(new Dimension(480, 0)); // Giữ chiều rộng cố định cho khu vực WEST
         
         // RIGHT: Danh sách vé
         JPanel pnlTableVe = createTableVe();
         
-        panel.add(pnlFormWrapper, BorderLayout.WEST);
+        // THAY THẾ: Thêm JScrollPane thay vì JPanel
+        panel.add(scrollForm, BorderLayout.WEST); // <<< SỬA ĐỔI Ở ĐÂY
         panel.add(pnlTableVe, BorderLayout.CENTER);
         
         return panel;
@@ -148,7 +168,7 @@ public class QuanLyVeThongKeForm extends JFrame {
         
         // BƯỚC 1: Chọn phim
         gbc.gridy = 0;
-        JLabel lblStep1 = new JLabel("1️⃣ Chọn Phim *");
+        JLabel lblStep1 = new JLabel("️⃣ Chọn Phim *");
         lblStep1.setFont(UIUtils.FONT_SUBHEADING);
         lblStep1.setForeground(new Color(99, 102, 241));
         pnlForm.add(lblStep1, gbc);
@@ -170,7 +190,7 @@ public class QuanLyVeThongKeForm extends JFrame {
         // BƯỚC 2: Chọn suất chiếu
         gbc.gridy = 3;
         gbc.insets = new Insets(20, 0, 10, 0);
-        JLabel lblStep2 = new JLabel("2️⃣ Chọn Suất Chiếu *");
+        JLabel lblStep2 = new JLabel("️⃣ Chọn Suất Chiếu *");
         lblStep2.setFont(UIUtils.FONT_SUBHEADING);
         lblStep2.setForeground(new Color(34, 197, 94));
         pnlForm.add(lblStep2, gbc);
@@ -201,7 +221,7 @@ public class QuanLyVeThongKeForm extends JFrame {
         // BƯỚC 3: Số lượng
         gbc.gridy = 6;
         gbc.insets = new Insets(20, 0, 10, 0);
-        JLabel lblStep3 = new JLabel("3️⃣ Số Lượng Vé *");
+        JLabel lblStep3 = new JLabel("️⃣ Số Lượng Vé *");
         lblStep3.setFont(UIUtils.FONT_SUBHEADING);
         lblStep3.setForeground(new Color(251, 146, 60));
         pnlForm.add(lblStep3, gbc);

@@ -88,15 +88,24 @@ public class QuanLySuatChieuForm extends JFrame {
         pnlContent.setOpaque(false);
         pnlContent.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // LEFT: FORM
-        JPanel pnlFormWrapper = createFormPanel();
-        pnlFormWrapper.setPreferredSize(new Dimension(450, 0));
-        
-        // RIGHT: TABLE
-        JPanel pnlTableWrapper = createTablePanel();
-        
-        pnlContent.add(pnlFormWrapper, BorderLayout.WEST);
-        pnlContent.add(pnlTableWrapper, BorderLayout.CENTER);
+       // LEFT: FORM
+JPanel pnlFormWrapper = createFormPanel();
+// KHÔNG cần set PreferredSize(450, 0) cho pnlFormWrapper nữa.
+
+// BỌC pnlFormWrapper VÀO JScrollPane
+JScrollPane scrollForm = new JScrollPane(pnlFormWrapper);
+// Set kích thước cố định cho JScrollPane khi đặt ở BorderLayout.WEST
+scrollForm.setPreferredSize(new Dimension(450, 0)); 
+scrollForm.setBorder(null); // Tùy chọn: bỏ border mặc định
+// Đảm bảo chỉ có thanh cuộn dọc (nếu cần)
+scrollForm.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER); 
+
+// RIGHT: TABLE
+JPanel pnlTableWrapper = createTablePanel();
+
+// THAY THẾ: Thêm JScrollPane thay vì JPanel
+pnlContent.add(scrollForm, BorderLayout.WEST); // <<< SỬA ĐỔI Ở ĐÂY
+pnlContent.add(pnlTableWrapper, BorderLayout.CENTER);
         
         mainPanel.add(pnlHeader, BorderLayout.NORTH);
         mainPanel.add(pnlContent, BorderLayout.CENTER);
