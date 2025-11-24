@@ -7,7 +7,7 @@ import java.sql.SQLException;
 public class DatabaseConnection {
     private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=QLRapPhim;encrypt=false;trustServerCertificate=true";
     private static final String USER = "sa"; // Thay đổi theo cấu hình
-    private static final String PASSWORD = "1234"; // Thay đổi mật khẩu của bạn
+    private static final String PASSWORD = "123"; // Thay đổi mật khẩu của bạn
     
     private static Connection connection = null;
         
